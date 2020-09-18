@@ -197,7 +197,9 @@ def test(model, annotations, cfg):
         boxes = do_detect(model, sized, 0.0, 0.4, use_cuda)
         boxes = np.array(boxes[0]).tolist()
         finish = time.time()
+        #print('Predicted in %f seconds.' % (finish - start))
 
+        out=[]
         if type(boxes) == list:
             for box in boxes:
                 box_json = {}
@@ -221,8 +223,9 @@ def test(model, annotations, cfg):
                 box_json["timing"] = float(finish - start)
                 boxes_json.append(box_json)
                 # print("see box_json: ", box_json)
-                with open(resFile, 'w') as outfile:
-                    json.dump(boxes_json, outfile, default=myconverter)
+                out.append(boxes_json)
+                #with open(resFile, 'w') as outfile:
+                #    json.dump(boxes_json, outfile)
         else:
             print("warning: output from model after postprocessing is not a list, ignoring")
             return
@@ -232,7 +235,7 @@ def test(model, annotations, cfg):
         # plot_boxes(img, boxes, 'data/outcome/predictions_{}.jpg'.format(image_id), class_names)
 
     with open(resFile, 'w') as outfile:
-        json.dump(boxes_json, outfile, default=myconverter)
+        json.dump(out, outfile)
 
     evaluate_on_coco(cfg, resFile)
 
