@@ -14,6 +14,7 @@ import os
 import sys
 import time
 from collections import defaultdict
+import cv2
 
 import numpy as np
 import torch
@@ -171,8 +172,10 @@ def test(model, annotations, cfg):
         use_cuda = 0
 
     # do one forward pass first to circumvent cold start
-    throwaway_image = Image.open('data/dog.jpg').convert('RGB').resize((model.width, model.height))
-    do_detect(model, throwaway_image, 0.5, 80, 0.4, use_cuda)
+    throwaway_image = cv2.imread('data/dog.jpg')
+    throwaway_image = cv2.resize(throwaway_image, (model.width, model.height))
+    throwaway_image = cv2.cvtColor(throwaway_image, cv2.COLOR_BGR2RGB)
+    do_detect(model, throwaway_image, 0.5, 0.4, use_cuda)
     boxes_json = []
 
     for i, image_annotation in enumerate(images):
@@ -183,26 +186,29 @@ def test(model, annotations, cfg):
         image_width = image_annotation["width"]
 
         # open and resize each image first
-        img = Image.open(os.path.join(cfg.dataset_dir, image_file_name)).convert('RGB')
-        sized = img.resize((model.width, model.height))
+        img = cv2.imread(os.path.join(cfg.dataset_dir, image_file_name))
+        sized = cv2.resize(img, (model.width, model.height))
+        sized = cv2.cvtColor(sized, cv2.COLOR_BGR2RGB)
 
         if use_cuda:
             model.cuda()
 
         start = time.time()
-        boxes = do_detect(model, sized, 0.0, 80, 0.4, use_cuda)
+        boxes = do_detect(model, sized, 0.0, 0.4, use_cuda)
+        boxes = np.array(boxes[0]).tolist()
         finish = time.time()
+
         if type(boxes) == list:
             for box in boxes:
                 box_json = {}
                 category_id = box[-1]
                 score = box[-2]
                 bbox_normalized = box[:4]
-                box_json["category_id"] = int(category_id)
-                box_json["image_id"] = int(image_id)
+                box_json["category_id"] = category_id
+                box_json["image_id"] = image_id
                 bbox = []
                 for i, bbox_coord in enumerate(bbox_normalized):
-                    modified_bbox_coord = float(bbox_coord)
+                    modified_bbox_coord = bbox_coord
                     if i % 2:
                         modified_bbox_coord *= image_height
                     else:
@@ -237,15 +243,15 @@ def get_args(**kwargs):
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-f', '--load', dest='load', type=str, default=None,
                         help='Load model from a .pth file')
-    parser.add_argument('-g', '--gpu', metavar='G', type=str, default='-1',
+    parser.add_argument('-g', '--gpu', metavar='G', type=str, default='0',
                         help='GPU', dest='gpu')
-    parser.add_argument('-dir', '--data-dir', type=str, default=None,
+    parser.add_argument('-dir', '--data-dir', type=str, default='val2017',
                         help='dataset dir', dest='dataset_dir')
     parser.add_argument('-gta', '--ground_truth_annotations', type=str, default='instances_val2017.json',
                         help='ground truth annotations file', dest='gt_annotations_path')
-    parser.add_argument('-w', '--weights_file', type=str, default='weights/yolov4.weights',
+    parser.add_argument('-w', '--weights_file', type=str, default='yolov4-tiny.weights',
                         help='weights file to load', dest='weights_file')
-    parser.add_argument('-c', '--model_config', type=str, default='cfg/yolov4.cfg',
+    parser.add_argument('-c', '--model_config', type=str, default='cfg/yolov4-tiny.cfg',
                         help='model config file to load', dest='model_config')
     args = vars(parser.parse_args())
 

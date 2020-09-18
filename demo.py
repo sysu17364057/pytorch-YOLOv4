@@ -14,19 +14,20 @@
 # import time
 # from PIL import Image, ImageDraw
 # from models.tiny_yolo import TinyYoloNet
-from tool.utils import *
-from tool.torch_utils import *
-from tool.darknet2pytorch import Darknet
+from server.yolov4.tool.utils import *
+from server.yolov4.tool.torch_utils import *
+from server.yolov4.tool.darknet2pytorch import Darknet
 import argparse
 
 """hyper parameters"""
 use_cuda = True
 
-def detect_cv2(cfgfile, weightfile, imgfile):
+
+def detect_cv2(imgfile, cfgfile='./cfg/yolov4-tiny.cfg', weightfile='yolov4-tiny.weights'):
     import cv2
     m = Darknet(cfgfile)
 
-    m.print_network()
+    # m.print_network()
     m.load_weights(weightfile)
     print('Loading weights from %s... Done!' % (weightfile))
 
@@ -53,7 +54,9 @@ def detect_cv2(cfgfile, weightfile, imgfile):
         if i == 1:
             print('%s: Predicted in %f seconds.' % (imgfile, (finish - start)))
 
-    plot_boxes_cv2(img, boxes[0], savename='predictions.jpg', class_names=class_names)
+    img_new = plot_boxes_cv2(
+        img, boxes[0], savename='predictions.jpg', class_names=class_names)
+    return img_new
 
 
 def detect_cv2_camera(cfgfile, weightfile):
@@ -92,7 +95,8 @@ def detect_cv2_camera(cfgfile, weightfile):
         finish = time.time()
         print('Predicted in %f seconds.' % (finish - start))
 
-        result_img = plot_boxes_cv2(img, boxes[0], savename=None, class_names=class_names)
+        result_img = plot_boxes_cv2(
+            img, boxes[0], savename=None, class_names=class_names)
 
         cv2.imshow('Yolo demo', result_img)
         cv2.waitKey(1)
@@ -131,18 +135,20 @@ def detect_skimage(cfgfile, weightfile, imgfile):
         if i == 1:
             print('%s: Predicted in %f seconds.' % (imgfile, (finish - start)))
 
-    plot_boxes_cv2(img, boxes, savename='predictions.jpg', class_names=class_names)
+    plot_boxes_cv2(img, boxes, savename='predictions.jpg',
+                   class_names=class_names)
 
 
 def get_args():
-    parser = argparse.ArgumentParser('Test your image or video by trained model.')
-    parser.add_argument('-cfgfile', type=str, default='./cfg/yolov4.cfg',
+    parser = argparse.ArgumentParser(
+        'Test your image or video by trained model.')
+    parser.add_argument('-cfgfile', type=str, default='./cfg/yolov4-tiny.cfg',
                         help='path of cfg file', dest='cfgfile')
     parser.add_argument('-weightfile', type=str,
-                        default='./checkpoints/Yolov4_epoch1.pth',
+                        default='yolov4-tiny.weights',
                         help='path of trained model.', dest='weightfile')
     parser.add_argument('-imgfile', type=str,
-                        default='./data/mscoco2017/train2017/190109_180343_00154162.jpg',
+                        default='',
                         help='path of your image file.', dest='imgfile')
     args = parser.parse_args()
 
