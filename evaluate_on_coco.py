@@ -248,7 +248,7 @@ def get_args(**kwargs):
                         help='Load model from a .pth file')
     parser.add_argument('-g', '--gpu', metavar='G', type=str, default='0',
                         help='GPU', dest='gpu')
-    parser.add_argument('-dir', '--data-dir', type=str, default='val2017',
+    parser.add_argument('-dir', '--data-dir', type=str, default='coco/images/val2017',
                         help='dataset dir', dest='dataset_dir')
     parser.add_argument('-gta', '--ground_truth_annotations', type=str, default='instances_val2017.json',
                         help='ground truth annotations file', dest='gt_annotations_path')
