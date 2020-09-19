@@ -93,69 +93,29 @@ def myconverter(obj):
         return obj
 
 def evaluate_on_coco(cfg, resFile):
-    annType = "bbox"  # specify type here
-    with open(resFile, 'r') as f:
-        unsorted_annotations = json.load(f)
-    sorted_annotations = list(sorted(unsorted_annotations, key=lambda single_annotation: single_annotation["image_id"]))
-    sorted_annotations = list(map(convert_cat_id_and_reorientate_bbox, sorted_annotations))
-    reshaped_annotations = defaultdict(list)
-    for annotation in sorted_annotations:
-        reshaped_annotations[annotation['image_id']].append(annotation)
+    try:  # https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocoEvalDemo.ipynb
+            from pycocotools.coco import COCO
+            from pycocotools.cocoeval import COCOeval
 
-    with open('temp.json', 'w') as f:
-        json.dump(sorted_annotations, f)
+            imgIds = sorted(cocoGt.getImgIds())
+            cocoGt = COCO(glob.glob('instances_val2017.json')[0])  # initialize COCO ground truth api
+            cocoDt = cocoGt.loadRes()  # initialize COCO pred api
+            cocoEval = COCOeval(cocoGt, cocoDt, resFile)
+            cocoEval.params.imgIds = imgIds  # image IDs to evaluate
+            cocoEval.evaluate()
+            cocoEval.accumulate()
+            cocoEval.summarize()
+            map, map50 = cocoEval.stats[:2]  # update results (mAP@0.5:0.95, mAP@0.5)
+        except Exception as e:
+            print('ERROR: pycocotools unable to run: %s' % e)
 
-    cocoGt = COCO(cfg.gt_annotations_path)
-    cocoDt = cocoGt.loadRes('temp.json')
 
-    with open(cfg.gt_annotations_path, 'r') as f:
-        gt_annotation_raw = json.load(f)
-        gt_annotation_raw_images = gt_annotation_raw["images"]
-        gt_annotation_raw_labels = gt_annotation_raw["annotations"]
-
-    rgb_label = (255, 0, 0)
-    rgb_pred = (0, 255, 0)
-
-    for i, image_id in enumerate(reshaped_annotations):
-        image_annotations = reshaped_annotations[image_id]
-        gt_annotation_image_raw = list(filter(
-            lambda image_json: image_json['id'] == image_id, gt_annotation_raw_images
-        ))
-        gt_annotation_labels_raw = list(filter(
-            lambda label_json: label_json['image_id'] == image_id, gt_annotation_raw_labels
-        ))
-        if len(gt_annotation_image_raw) == 1:
-            image_path = os.path.join(cfg.dataset_dir, gt_annotation_image_raw[0]["file_name"])
-            actual_image = Image.open(image_path).convert('RGB')
-            draw = ImageDraw.Draw(actual_image)
-
-            for annotation in image_annotations:
-                x1_pred, y1_pred, w, h = annotation['bbox']
-                x2_pred, y2_pred = x1_pred + w, y1_pred + h
-                cls_id = annotation['category_id']
-                label = get_class_name(cls_id)
-                draw.text((x1_pred, y1_pred), label, fill=rgb_pred)
-                draw.rectangle([x1_pred, y1_pred, x2_pred, y2_pred], outline=rgb_pred)
-            for annotation in gt_annotation_labels_raw:
-                x1_truth, y1_truth, w, h = annotation['bbox']
-                x2_truth, y2_truth = x1_truth + w, y1_truth + h
-                cls_id = annotation['category_id']
-                label = get_class_name(cls_id)
-                draw.text((x1_truth, y1_truth), label, fill=rgb_label)
-                draw.rectangle([x1_truth, y1_truth, x2_truth, y2_truth], outline=rgb_label)
-            actual_image.save("./data/outcome/predictions_{}".format(gt_annotation_image_raw[0]["file_name"]))
-        else:
-            print('please check')
-            break
-        if (i + 1) % 100 == 0: # just see first 100
-            break
-
-    imgIds = sorted(cocoGt.getImgIds())
-    cocoEval = COCOeval(cocoGt, cocoDt, annType)
-    cocoEval.params.imgIds = imgIds
-    cocoEval.evaluate()
-    cocoEval.accumulate()
-    cocoEval.summarize()
+    #imgIds = sorted(cocoGt.getImgIds())
+    #cocoEval = COCOeval(cocoGt, cocoDt, annType)
+    #cocoEval.params.imgIds = imgIds
+    #cocoEval.evaluate()
+    #cocoEval.accumulate()
+    #cocoEval.summarize()
 
 
 def test(model, annotations, cfg):
@@ -217,10 +177,10 @@ def test(model, annotations, cfg):
                         modified_bbox_coord *= image_width
                     modified_bbox_coord = round(modified_bbox_coord, 2)
                     bbox.append(modified_bbox_coord)
-                box_json["bbox_normalized"] = list(map(lambda x: round(float(x), 2), bbox_normalized))
+                #box_json["bbox_normalized"] = list(map(lambda x: round(float(x), 2), bbox_normalized))
                 box_json["bbox"] = bbox
                 box_json["score"] = round(float(score), 2)
-                box_json["timing"] = float(finish - start)
+                #box_json["timing"] = float(finish - start)
                 boxes_json.append(box_json)
                 # print("see box_json: ", box_json)
                 out.append(boxes_json)
