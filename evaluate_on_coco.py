@@ -14,7 +14,7 @@ import os
 import sys
 import time
 from collections import defaultdict
-import cv2
+import cv2,glob
 
 import numpy as np
 import torch
@@ -97,11 +97,12 @@ def evaluate_on_coco(cfg, resFile):
     try:  # https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocoEvalDemo.ipynb
         from pycocotools.coco import COCO
         from pycocotools.cocoeval import COCOeval
-
+        
+        cocoGt = COCO(cfg.gt_annotations_path)
         imgIds = sorted(cocoGt.getImgIds())
         # initialize COCO ground truth api
-        cocoGt = COCO(glob.glob('instances_val2017.json')[0])
-        cocoDt = cocoGt.loadRes()  # initialize COCO pred api
+        #cocoGt = COCO(glob.glob('instances_val2017.json')[0])
+        cocoDt = cocoGt.loadRes(resFile)  # initialize COCO pred api
         cocoEval = COCOeval(cocoGt, cocoDt, resFile)
         cocoEval.params.imgIds = imgIds  # image IDs to evaluate
         cocoEval.evaluate()
@@ -197,8 +198,8 @@ def test(model, annotations, cfg):
         # class_names = load_class_names(namesfile)
         # plot_boxes(img, boxes, 'data/outcome/predictions_{}.jpg'.format(image_id), class_names)
 
-    with open(resFile, 'w') as outfile:
-        json.dump(out, outfile)
+    with open(resFile, 'w') as file:
+        json.dump(out, file)
 
     evaluate_on_coco(cfg, resFile)
 
@@ -273,6 +274,7 @@ if __name__ == "__main__":
 
     model.print_network()
     model.load_weights(cfg.weights_file)
+
     model.eval()  # set model away from training
 
     if torch.cuda.device_count() > 1:
@@ -289,4 +291,6 @@ if __name__ == "__main__":
             exit()
     test(model=model,
          annotations=annotations,
-         cfg=cfg, )
+         cfg=cfg)
+
+    
