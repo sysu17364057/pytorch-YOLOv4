@@ -51,6 +51,7 @@ def get_class_name(cat):
         cat = cat - 11
     return class_names[cat]
 
+
 def convert_cat_id_and_reorientate_bbox(single_annotation):
     cat = single_annotation['category_id']
     bbox = single_annotation['bbox']
@@ -79,7 +80,6 @@ def convert_cat_id_and_reorientate_bbox(single_annotation):
     return single_annotation
 
 
-
 def myconverter(obj):
     if isinstance(obj, np.integer):
         return int(obj)
@@ -92,30 +92,33 @@ def myconverter(obj):
     else:
         return obj
 
+
 def evaluate_on_coco(cfg, resFile):
     try:  # https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocoEvalDemo.ipynb
-            from pycocotools.coco import COCO
-            from pycocotools.cocoeval import COCOeval
+        from pycocotools.coco import COCO
+        from pycocotools.cocoeval import COCOeval
 
-            imgIds = sorted(cocoGt.getImgIds())
-            cocoGt = COCO(glob.glob('instances_val2017.json')[0])  # initialize COCO ground truth api
-            cocoDt = cocoGt.loadRes()  # initialize COCO pred api
-            cocoEval = COCOeval(cocoGt, cocoDt, resFile)
-            cocoEval.params.imgIds = imgIds  # image IDs to evaluate
-            cocoEval.evaluate()
-            cocoEval.accumulate()
-            cocoEval.summarize()
-            map, map50 = cocoEval.stats[:2]  # update results (mAP@0.5:0.95, mAP@0.5)
-        except Exception as e:
-            print('ERROR: pycocotools unable to run: %s' % e)
+        imgIds = sorted(cocoGt.getImgIds())
+        # initialize COCO ground truth api
+        cocoGt = COCO(glob.glob('instances_val2017.json')[0])
+        cocoDt = cocoGt.loadRes()  # initialize COCO pred api
+        cocoEval = COCOeval(cocoGt, cocoDt, resFile)
+        cocoEval.params.imgIds = imgIds  # image IDs to evaluate
+        cocoEval.evaluate()
+        cocoEval.accumulate()
+        cocoEval.summarize()
+        # update results (mAP@0.5:0.95, mAP@0.5)
+        map, map50 = cocoEval.stats[:2]
+    except Exception as e:
+        print('ERROR: pycocotools unable to run: %s' % e)
 
 
-    #imgIds = sorted(cocoGt.getImgIds())
-    #cocoEval = COCOeval(cocoGt, cocoDt, annType)
-    #cocoEval.params.imgIds = imgIds
-    #cocoEval.evaluate()
-    #cocoEval.accumulate()
-    #cocoEval.summarize()
+    # imgIds = sorted(cocoGt.getImgIds())
+    # cocoEval = COCOeval(cocoGt, cocoDt, annType)
+    # cocoEval.params.imgIds = imgIds
+    # cocoEval.evaluate()
+    # cocoEval.accumulate()
+    # cocoEval.summarize()
 
 
 def test(model, annotations, cfg):
@@ -157,7 +160,7 @@ def test(model, annotations, cfg):
         boxes = do_detect(model, sized, 0.0, 0.4, use_cuda)
         boxes = np.array(boxes[0]).tolist()
         finish = time.time()
-        #print('Predicted in %f seconds.' % (finish - start))
+        # print('Predicted in %f seconds.' % (finish - start))
 
         out=[]
         if type(boxes) == list:
@@ -177,14 +180,14 @@ def test(model, annotations, cfg):
                         modified_bbox_coord *= image_width
                     modified_bbox_coord = round(modified_bbox_coord, 2)
                     bbox.append(modified_bbox_coord)
-                #box_json["bbox_normalized"] = list(map(lambda x: round(float(x), 2), bbox_normalized))
+                # box_json["bbox_normalized"] = list(map(lambda x: round(float(x), 2), bbox_normalized))
                 box_json["bbox"] = bbox
                 box_json["score"] = round(float(score), 2)
-                #box_json["timing"] = float(finish - start)
+                # box_json["timing"] = float(finish - start)
                 boxes_json.append(box_json)
                 # print("see box_json: ", box_json)
                 out.append(boxes_json)
-                #with open(resFile, 'w') as outfile:
+                # with open(resFile, 'w') as outfile:
                 #    json.dump(boxes_json, outfile)
         else:
             print("warning: output from model after postprocessing is not a list, ignoring")
