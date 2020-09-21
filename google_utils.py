@@ -119,3 +119,4 @@ def get_token(cookie="./cookie"):
 
 if __name__ == '__main__':
     gdrive_download('1Y6Kou6kEB0ZEMCCpJSKStCor4KAReE43','val2017.zip')
+    gdrive_download('1cewMfusmPjYWbrnuJRuKhPMwRe_b9PaT','yolov4.weights')
