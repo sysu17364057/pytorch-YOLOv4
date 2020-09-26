@@ -260,7 +260,7 @@ if ValidateMandatoryArgs(args.gtFolder, '-gt/--gtfolder', errors):
     gtFolder = ValidatePaths(args.gtFolder, '-gt/--gtfolder', errors)
 else:
     # errors.pop()
-    gtFolder = os.path.join(currentPath, 'groundtruths')
+    gtFolder = os.path.join(currentPath, 'groundtruth')
     if os.path.isdir(gtFolder) is False:
         errors.append('folder %s not found' % gtFolder)
 # Coordinates types
@@ -276,7 +276,7 @@ if ValidateMandatoryArgs(args.detFolder, '-det/--detfolder', errors):
     detFolder = ValidatePaths(args.detFolder, '-det/--detfolder', errors)
 else:
     # errors.pop()
-    detFolder = os.path.join(currentPath, 'detections')
+    detFolder = os.path.join(currentPath, 'detection')
     if os.path.isdir(detFolder) is False:
         errors.append('folder %s not found' % detFolder)
 if args.savePath is not None:
